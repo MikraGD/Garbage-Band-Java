@@ -1,0 +1,85 @@
+{
+  "entities": {
+    "Project": {
+      "title": "Project",
+      "description": "A multitrack music recording project containing tracks, mixer settings, and note events.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Google UID of the owner"
+        },
+        "title": {
+          "type": "string",
+          "description": "Song title"
+        },
+        "bpm": {
+          "type": "integer",
+          "description": "Beats per minute tempo (40 to 240)"
+        },
+        "timeSignature": {
+          "type": "string",
+          "description": "Time signature (e.g. 4/4, 3/4)"
+        },
+        "masterVolume": {
+          "type": "number",
+          "description": "Master fader volume (0.0 to 1.0)"
+        },
+        "tracks": {
+          "type": "array",
+          "description": "List of multi-track data objects"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp via serverTimestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp via serverTimestamp"
+        }
+      },
+      "required": ["userId", "title", "bpm", "timeSignature", "masterVolume", "tracks", "createdAt"]
+    },
+    "SharedProject": {
+      "title": "SharedProject",
+      "description": "Publicly shared project snapshot for web player preview and cross-platform import.",
+      "type": "object",
+      "properties": {
+        "shareCode": {
+          "type": "string",
+          "description": "6-character human-friendly share code"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID"
+        },
+        "title": {
+          "type": "string",
+          "description": "Song title"
+        },
+        "projectJson": {
+          "type": "string",
+          "description": "Serialized project JSON string for web player"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["shareCode", "userId", "title", "projectJson", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/projects/{projectId}": {
+      "schema": "Project",
+      "description": "User multi-track music projects"
+    },
+    "/shared_projects/{shareId}": {
+      "schema": "SharedProject",
+      "description": "Public shared projects accessible via share link or web player"
+    }
+  }
+}

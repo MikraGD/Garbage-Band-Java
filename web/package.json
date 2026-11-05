@@ -1,0 +1,12 @@
+{
+  "name": "garagestudio-web",
+  "version": "1.0.0",
+  "description": "Cross-platform Web DAW for GarageStudio",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["music", "daw", "multitrack", "synthesizer", "webaudio"],
+  "author": "GarageStudio",
+  "license": "MIT"
+}

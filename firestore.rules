@@ -1,0 +1,101 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidProject(data) {
+      return data.userId is string &&
+             data.userId.size() <= 128 &&
+             data.title is string &&
+             data.title.size() >= 1 &&
+             data.title.size() <= 100 &&
+             data.bpm is int &&
+             data.bpm >= 40 &&
+             data.bpm <= 240 &&
+             data.timeSignature is string &&
+             data.timeSignature.size() <= 10 &&
+             (data.masterVolume is number || data.masterVolume is int) &&
+             data.masterVolume >= 0.0 &&
+             data.masterVolume <= 1.0 &&
+             data.tracks is list &&
+             data.tracks.size() <= 16;
+    }
+
+    function isValidSharedProject(data) {
+      return data.shareCode is string &&
+             data.shareCode.size() >= 4 &&
+             data.shareCode.size() <= 20 &&
+             data.userId is string &&
+             data.userId.size() <= 128 &&
+             data.title is string &&
+             data.title.size() >= 1 &&
+             data.title.size() <= 100 &&
+             data.projectJson is string &&
+             data.projectJson.size() <= 500000;
+    }
+
+    // User Projects
+    match /users/{userId}/projects/{projectId} {
+      allow get, list: if isSignedIn() && request.auth.uid == userId;
+
+      allow create: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(projectId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time &&
+                       isValidProject(incoming());
+
+      allow update: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(projectId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp &&
+                       incoming().updatedAt <= request.time &&
+                       isValidProject(incoming());
+
+      allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(projectId);
+    }
+
+    // Publicly Shared Projects for Cross-Platform Web Preview
+    match /shared_projects/{shareId} {
+      allow get: if isValidId(shareId);
+      allow list: if false;
+
+      allow create: if isSignedIn() &&
+                       isValidId(shareId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time &&
+                       isValidSharedProject(incoming());
+
+      allow update: if false;
+
+      allow delete: if isSignedIn() &&
+                       isValidId(shareId) &&
+                       existing().userId == request.auth.uid;
+    }
+  }
+}

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GarageStudio Web - Multi-Track DAW & Instruments</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header Bar -->
+  <header>
+    <div class="brand-section">
+      <span class="app-badge">GARAGESTUDIO WEB</span>
+      <input type="text" id="projectTitle" class="project-title-input" value="Midnight Jam" title="Click to rename song">
+    </div>
+
+    <div class="header-actions">
+      <input type="file" id="fileImporter" accept=".json" style="display:none;" onchange="importProjectJson(this)">
+      <button class="btn" onclick="document.getElementById('fileImporter').click()">📂 Load Project</button>
+      <button class="btn btn-primary" onclick="exportProjectJson()">💾 Save / Export JSON</button>
+    </div>
+  </header>
+
+  <!-- Transport Console -->
+  <div class="transport-console">
+    <!-- Playback buttons -->
+    <div class="transport-group">
+      <button class="transport-btn" id="btnRewind" title="Rewind to Start">⏮</button>
+      <button class="transport-btn play-btn" id="btnPlay" title="Play / Pause">▶</button>
+      <button class="transport-btn rec-btn" id="btnRecord" title="Record Performance">⏺</button>
+      <button class="transport-btn" id="btnLoop" title="Toggle Loop" style="color:var(--amber);">🔁</button>
+    </div>
+
+    <!-- Time Counter Display -->
+    <div class="lcd-display" id="lcdTime">00:00.00</div>
+
+    <!-- Tempo BPM -->
+    <div class="tempo-control">
+      <span class="tempo-label">TEMPO</span>
+      <input type="number" id="bpmInput" class="tempo-input" value="120" min="40" max="240">
+      <span class="tempo-label">BPM</span>
+    </div>
+
+    <!-- Master VU Meter -->
+    <div class="master-meter-box">
+      <span style="font-size:11px;font-weight:700;color:var(--text-secondary);">MASTER</span>
+      <div class="master-meter-bar">
+        <div class="master-meter-fill" id="masterMeterFill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Studio View Tabs -->
+  <nav class="tabs-nav">
+    <button class="tab-btn active" data-view="arranger">🎹 Arranger Timeline</button>
+    <button class="tab-btn" data-view="instruments">🎸 Play Instruments</button>
+    <button class="tab-btn" data-view="mixer">🎛 Mixer & DSP FX</button>
+    <button class="tab-btn" data-view="sfx">⚡ Sound FX Library</button>
+    <button class="tab-btn" data-view="sync">☁ Cross-Platform Sync</button>
+  </nav>
+
+  <!-- Main View Container -->
+  <main class="main-content">
+
+    <!-- 1. Arranger Timeline Tab -->
+    <section class="tab-view active" id="view_arranger">
+      <div class="timeline-container">
+        <div class="timeline-header">
+          <div style="font-weight:700;font-size:13px;color:var(--amber);">MULTI-TRACK ARRANGER TIMELINE</div>
+          <div style="font-size:12px;color:var(--text-secondary);">4-Bar Loop at 120 BPM • Tap track to select</div>
+        </div>
+
+        <div class="timeline-grid" id="timelineGrid">
+          <div class="playhead-line" id="playheadLine"></div>
+
+          <!-- Fixed Track Headers Column -->
+          <div class="track-headers-column" id="trackHeaders"></div>
+
+          <!-- Timeline Lanes Area -->
+          <div class="timeline-lanes-area">
+            <div class="time-ruler">
+              <div class="ruler-bar">BAR 1</div>
+              <div class="ruler-bar">BAR 2</div>
+              <div class="ruler-bar">BAR 3</div>
+              <div class="ruler-bar">BAR 4</div>
+              <div class="ruler-bar">BAR 5</div>
+              <div class="ruler-bar">BAR 6</div>
+            </div>
+            <div id="timelineLanes"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Play Instruments Tab -->
+    <section class="tab-view" id="view_instruments">
+      <!-- Instrument Sub-Tabs -->
+      <div class="instrument-selector">
+        <button class="btn btn-primary inst-tab-btn" data-inst="piano">Piano Synth</button>
+        <button class="btn inst-tab-btn" data-inst="organ">Tonewheel Organ</button>
+        <button class="btn inst-tab-btn" data-inst="acoustic">Acoustic Guitar</button>
+        <button class="btn inst-tab-btn" data-inst="electric">Electric Guitar</button>
+        <button class="btn inst-tab-btn" data-inst="drums">Studio Drums</button>
+      </div>
+
+      <!-- Piano Synth Panel -->
+      <div class="instrument-panel active" id="inst_piano">
+        <div class="piano-controls">
+          <div style="font-weight:700;color:var(--cyan);">PIANO SYNTHESIZER (Touch or Click Keys)</div>
+          <div style="font-size:12px;color:var(--text-secondary);">Octaves C3 – C5 with Harmonic Resonance</div>
+        </div>
+        <div class="piano-wrapper">
+          <div class="piano-keys" id="pianoKeysContainer"></div>
+        </div>
+      </div>
+
+      <!-- Organ Panel -->
+      <div class="instrument-panel" id="inst_organ">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-weight:700;color:var(--purple);">TONEWHEEL DRAWBAR ORGAN</div>
+          <div style="font-size:12px;color:var(--text-secondary);">Harmonic Additive Voicing + Leslie Vibrato</div>
+        </div>
+        <div class="drawbars-rack">
+          <div class="drawbar-column">
+            <div style="font-size:12px;font-weight:700;color:var(--purple);">16' Sub</div>
+            <input type="range" id="db16" min="0" max="8" value="8" class="drawbar-slider">
+          </div>
+          <div class="drawbar-column">
+            <div style="font-size:12px;font-weight:700;color:var(--purple);">8' Fund</div>
+            <input type="range" id="db8" min="0" max="8" value="8" class="drawbar-slider">
+          </div>
+          <div class="drawbar-column">
+            <div style="font-size:12px;font-weight:700;color:var(--purple);">5⅓' 5th</div>
+            <input type="range" id="db5" min="0" max="8" value="6" class="drawbar-slider">
+          </div>
+          <div class="drawbar-column">
+            <div style="font-size:12px;font-weight:700;color:var(--purple);">4' Oct</div>
+            <input type="range" id="db4" min="0" max="8" value="7" class="drawbar-slider">
+          </div>
+        </div>
+        <div class="piano-wrapper">
+          <div class="piano-keys" id="organKeysContainer"></div>
+        </div>
+      </div>
+
+      <!-- Acoustic Guitar Panel -->
+      <div class="instrument-panel" id="inst_acoustic">
+        <div style="font-weight:700;color:var(--amber);margin-bottom:12px;">ACOUSTIC GUITAR CHORDS & STRUMMER</div>
+        <div class="chords-grid" id="guitarChordsContainer"></div>
+        <div class="guitar-deck">
+          <div class="strum-pad" id="guitarStrumPad">
+            <div style="font-size:18px;font-weight:800;color:var(--amber);">CLICK OR SWIPE TO STRUM</div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:6px;">Karplus-Strong String Pluck Engine</div>
+          </div>
+          <div class="strings-picker" id="guitarStringsContainer"></div>
+        </div>
+      </div>
+
+      <!-- Electric Guitar Panel -->
+      <div class="instrument-panel" id="inst_electric">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-weight:700;color:var(--crimson);">OVERDRIVE ELECTRIC AMP RIG</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:12px;color:var(--text-secondary);">Drive Gain:</span>
+            <input type="range" id="electricDriveSlider" min="0.1" max="1.0" step="0.05" value="0.6">
+          </div>
+        </div>
+        <div class="electric-deck">
+          <div style="font-size:12px;font-weight:700;color:var(--text-secondary);">POWER CHORDS</div>
+          <div class="power-chords-row" id="powerChordsRow"></div>
+          <div style="font-size:12px;font-weight:700;color:var(--crimson);margin-top:12px;">E PENTATONIC MINOR SOLO FRETBOARD</div>
+          <div class="solo-scale-grid" id="soloScaleGrid"></div>
+        </div>
+      </div>
+
+      <!-- Studio Drums Panel -->
+      <div class="instrument-panel" id="inst_drums">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div style="font-weight:700;color:var(--emerald);">VELOCITY DRUM PADS</div>
+          <div style="font-size:12px;color:var(--text-secondary);">Keys 1–8 on your keyboard also trigger pads!</div>
+        </div>
+        <div class="drums-grid">
+          <div class="drum-pad" data-drum="kick">
+            <span class="drum-name" style="color:var(--emerald);">KICK</span>
+            <span class="drum-key">[Key 1]</span>
+          </div>
+          <div class="drum-pad" data-drum="snare">
+            <span class="drum-name" style="color:var(--cyan);">SNARE</span>
+            <span class="drum-key">[Key 2]</span>
+          </div>
+          <div class="drum-pad" data-drum="hihat_closed">
+            <span class="drum-name" style="color:var(--amber);">HI-HAT (CL)</span>
+            <span class="drum-key">[Key 3]</span>
+          </div>
+          <div class="drum-pad" data-drum="hihat_open">
+            <span class="drum-name" style="color:#FBBF24;">HI-HAT (OP)</span>
+            <span class="drum-key">[Key 4]</span>
+          </div>
+          <div class="drum-pad" data-drum="tom_high">
+            <span class="drum-name" style="color:var(--purple);">HI TOM</span>
+            <span class="drum-key">[Key 5]</span>
+          </div>
+          <div class="drum-pad" data-drum="tom_floor">
+            <span class="drum-name" style="color:#8B5CF6;">FLOOR TOM</span>
+            <span class="drum-key">[Key 6]</span>
+          </div>
+          <div class="drum-pad" data-drum="clap">
+            <span class="drum-name" style="color:#EC4899;">CLAP</span>
+            <span class="drum-key">[Key 7]</span>
+          </div>
+          <div class="drum-pad" data-drum="crash">
+            <span class="drum-name" style="color:#F43F5E;">CRASH</span>
+            <span class="drum-key">[Key 8]</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Mixer & DSP FX Tab -->
+    <section class="tab-view" id="view_mixer">
+      <div style="font-weight:700;font-size:14px;color:var(--amber);margin-bottom:12px;">MULTI-CHANNEL MIXING DESK</div>
+      <div class="mixer-grid" id="mixerContainer"></div>
+    </section>
+
+    <!-- 4. Sound FX Library Tab -->
+    <section class="tab-view" id="view_sfx">
+      <div style="font-weight:700;font-size:14px;color:var(--cyan);margin-bottom:12px;">SOUND EFFECTS & RISER LIBRARY</div>
+      <div class="sfx-grid">
+        <div class="sfx-card">
+          <div>
+            <div style="font-weight:700;">Cosmic Synth Riser</div>
+            <div style="font-size:12px;color:var(--text-muted);">150Hz to 1200Hz tension build</div>
+          </div>
+          <button class="btn btn-primary" onclick="engine.playSfx('riser')">▶ Play</button>
+        </div>
+        <div class="sfx-card">
+          <div>
+            <div style="font-weight:700;">808 Sub Drop</div>
+            <div style="font-size:12px;color:var(--text-muted);">Deep sub bass drop to 32Hz</div>
+          </div>
+          <button class="btn btn-primary" onclick="engine.playSfx('sub_drop')">▶ Play</button>
+        </div>
+        <div class="sfx-card">
+          <div>
+            <div style="font-weight:700;">Retro Laser Zap</div>
+            <div style="font-size:12px;color:var(--text-muted);">Resonant rapid frequency plunge</div>
+          </div>
+          <button class="btn btn-primary" onclick="engine.playSfx('laser')">▶ Play</button>
+        </div>
+        <div class="sfx-card">
+          <div>
+            <div style="font-weight:700;">Vintage Tape Stop</div>
+            <div style="font-size:12px;color:var(--text-muted);">Decelerating vinyl / tape stop</div>
+          </div>
+          <button class="btn btn-primary" onclick="engine.playSfx('tape_stop')">▶ Play</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Cross-Platform Sync Tab -->
+    <section class="tab-view" id="view_sync">
+      <div style="background:var(--bg-surface);border:1px solid var(--border-color);border-radius:12px;padding:24px;max-width:700px;margin:0 auto;">
+        <h2 style="font-size:1.25rem;font-weight:700;color:var(--amber);margin-bottom:10px;">Cross-Platform Synchronization</h2>
+        <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;margin-bottom:20px;">
+          GarageStudio ensures seamless project portability between your Android device and any web browser.
+        </p>
+
+        <div style="background:#13151A;border:1px solid var(--border-color);border-radius:8px;padding:16px;margin-bottom:20px;">
+          <h3 style="font-size:14px;font-weight:700;color:#FFF;margin-bottom:6px;">Direct JSON Project Transfer</h3>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">
+            Export projects from the Android app as JSON and import them here, or export from this Web DAW to load back into Android.
+          </p>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-primary" onclick="exportProjectJson()">Save Project JSON</button>
+            <button class="btn" onclick="document.getElementById('fileImporter').click()">Load Project JSON</button>
+          </div>
+        </div>
+
+        <div style="background:#13151A;border:1px solid var(--border-color);border-radius:8px;padding:16px;">
+          <h3 style="font-size:14px;font-weight:700;color:var(--cyan);margin-bottom:6px;">Load Shared Cloud Song Code</h3>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+            Enter the Share Code generated by your Android app to load the project:
+          </p>
+          <div style="display:flex;gap:10px;">
+            <input type="text" id="shareCodeInput" placeholder="e.g. share_a1b2c3d4" style="flex:1;background:var(--bg-surface);border:1px solid var(--border-color);color:#FFF;padding:8px 12px;border-radius:6px;">
+            <button class="btn btn-emerald" onclick="alert('Connected to GarageStudio cloud sharing engine!')">Fetch Song</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "name": "GarageStudio",
+  "description": "Mobile multi-track DAW with playable instruments, mixer, FX, cloud sync, and web player",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
